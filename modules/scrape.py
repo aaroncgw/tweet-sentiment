@@ -1,5 +1,9 @@
 import pandas as pd
 import twint
+import requests
+import zipfile
+import tempfile
+import os
 
 
 def scrape_twitter_handles(handles_path='data/handles.csv', handles_directory='data/handles_raw_data', start_from=0):
@@ -27,5 +31,76 @@ def scrape_twitter_handles(handles_path='data/handles.csv', handles_directory='d
             twint.run.Search(c)
 
 
-scrape_twitter_handles()
+def download_file_from_google_drive(id, destination):
+
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+
+        return None
+
+    def save_response_content(response, destination):
+        CHUNK_SIZE = 32768
+
+        with open(destination, "wb") as f:
+            for chunk in response.iter_content(CHUNK_SIZE):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+
+    URL = "https://docs.google.com/uc?export=download"
+
+    session = requests.Session()
+
+    response = session.get(URL, params={'id': id}, stream = True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': id, 'confirm': token}
+        response = session.get(URL, params = params, stream = True)
+
+    save_response_content(response, destination)
+
+
+def download_txt_files_from_google_drive(id='1zZ02PQKig89mikY5Xhks0vtvzcsr3Dd1', destination='data/handles_raw_data'):
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        download_file_from_google_drive(id, tmpdir + 'txt_files.zip')
+
+        with zipfile.ZipFile(tmpdir + 'txt_files.zip', "r") as zip_ref:
+            zip_ref.extractall(destination)
+
+
+def from_raw_txt_to_csv(input_directory='data/handles_raw_data', output_file='data/tweets.csv'):
+    # Obtain a list of all text files with raw tweet data. One file per handle
+    raw_handle_files = os.listdir(input_directory)
+    # List of all handles
+    raw_handles = [raw_handle_file.rstrip('.txt') for raw_handle_file in raw_handle_files]
+
+    # List of all tweets in raw form
+    raw_tweets = []
+    for raw_handle_file in raw_handle_files:
+        with open(input_directory + '/' + raw_handle_file, 'r') as f:
+            raw_tweets += f.readlines()
+
+    # Remove tweets that dont have an int as first element (tweet_id)
+    raw_tweets = [raw_tweet for raw_tweet in raw_tweets if raw_tweet.split(' ')[0].isdigit()]
+
+    # Split tweets in raw form into tweet_id, timestamp, handle, raw_tweet
+    df_raw_tweets_input = [[int(raw_tweet.split(' ')[0]),
+                            ' '.join(raw_tweet.split(' ')[1:3]),
+                            raw_tweet.split(' ')[4].strip('<>'),
+                            ' '.join(raw_tweet.split(' ')[5:]).rstrip('\n')] for raw_tweet in raw_tweets]
+
+    # Create dataframe and sort by tweet_id
+    tweets_df = pd.DataFrame(df_raw_tweets_input, columns=['tweet_id', 'timestamp', 'handle', 'tweet'])
+    tweets_df.sort_values('tweet_id', inplace=True)
+
+    # Remove tweets whose handle isnt in the raw_handle list
+    tweets_df = tweets_df[tweets_df.handle.isin(raw_handles)].reset_index(drop=True)
+
+    tweets_df.to_csv(output_file, index=False)
+
+    print("From raw text files to csv tweet database successful")
+
 

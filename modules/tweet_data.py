@@ -1,46 +1,12 @@
 import pandas as pd
 from collections import Counter
 import re
-import os
 
 
 REGEX_DICT = {'links': "http\S+",
               'hashtags': "\B#\w*[a-zA-Z]+\w*",
               'emails': "[a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+",
               'adds': "\s([@][\w_-]+)"}
-
-
-def from_raw_txt_to_csv(input_directory='data', output_file='data/tweets.csv'):
-    # Obtain a list of all text files with raw tweet data. One file per handle
-    raw_handle_files = os.listdir(input_directory)
-    # List of all handles
-    raw_handles = [raw_handle_file.rstrip('.txt') for raw_handle_file in raw_handle_files]
-
-    # List of all tweets in raw form
-    raw_tweets = []
-    for raw_handle_file in raw_handle_files:
-        with open(input_directory + '/' + raw_handle_file, 'r') as f:
-            raw_tweets += f.readlines()
-
-    # Remove tweets that dont have an int as first element (tweet_id)
-    raw_tweets = [raw_tweet for raw_tweet in raw_tweets if raw_tweet.split(' ')[0].isdigit()]
-
-    # Split tweets in raw form into tweet_id, timestamp, handle, raw_tweet
-    df_raw_tweets_input = [[int(raw_tweet.split(' ')[0]),
-                            ' '.join(raw_tweet.split(' ')[1:3]),
-                            raw_tweet.split(' ')[4].strip('<>'),
-                            ' '.join(raw_tweet.split(' ')[5:]).rstrip('\n')] for raw_tweet in raw_tweets]
-
-    # Create dataframe and sort by tweet_id
-    tweets_df = pd.DataFrame(df_raw_tweets_input, columns=['tweet_id', 'timestamp', 'handle', 'tweet'])
-    tweets_df.sort_values('tweet_id', inplace=True)
-
-    # Remove tweets whose handle isnt in the raw_handle list
-    tweets_df = tweets_df[tweets_df.handle.isin(raw_handles)].reset_index(drop=True)
-
-    tweets_df.to_csv(output_file, index=False)
-
-    print("From raw text files to csv tweet database successful")
 
 
 def read_raw_data(file='data/tweets.csv'):
@@ -58,6 +24,15 @@ def read_raw_data(file='data/tweets.csv'):
 
 def get_clean_data(file='data/tweets.csv'):
 
+    def clean(tweet):
+        # Turn everything to lower case
+        tweet = tweet.lower()
+        # Remove symbols other than letters in the alphabet and numbers
+        tweet = re.sub(r"\'", '', tweet)
+        tweet = re.sub(r'[^a-zA-Z0-9]', ' ', tweet)
+
+        return tweet
+
     tweet_data = read_raw_data(file)
 
     for key, value in REGEX_DICT.items():
@@ -65,20 +40,9 @@ def get_clean_data(file='data/tweets.csv'):
         tweet_data.tweet = tweet_data.tweet.apply(lambda tweet: re.sub(value, '', tweet))
 
     print("Cleaning tweets")
-    tweet_data.tweet = tweet_data.tweet.apply(_clean)
+    tweet_data.tweet = tweet_data.tweet.apply(clean)
 
     return tweet_data
-
-
-def _clean(tweet):
-
-    # Turn everything to lower case
-    tweet = tweet.lower()
-    # Remove symbols other than letters in the alphabet and numbers
-    tweet = re.sub(r"\'", '', tweet)
-    tweet = re.sub(r'[^a-zA-Z0-9]', ' ', tweet)
-
-    return tweet
 
 
 def get_links(file='data/tweets.csv'):
