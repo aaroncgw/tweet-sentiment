@@ -10,6 +10,11 @@ REGEX_DICT = {'links': "http\S+",
 
 
 def read_raw_data(file='data/tweets.csv'):
+    """
+    Read csv file with raw tweet data
+    :param file: csv file path
+    :return: pandas DataFrame
+    """
 
     print("Reading data")
 
@@ -23,6 +28,11 @@ def read_raw_data(file='data/tweets.csv'):
 
 
 def get_clean_data(file='data/tweets.csv'):
+    """
+    Reads csv file with raw tweet data and returns a DataFrame with tweets parsed and cleaned
+    :param file: csv file path
+    :return: pandas DataFrame
+    """
 
     def clean(tweet):
         # Turn everything to lower case
@@ -35,6 +45,7 @@ def get_clean_data(file='data/tweets.csv'):
 
     tweet_data = read_raw_data(file)
 
+    # Remove links, hashtags, emails, @s
     for key, value in REGEX_DICT.items():
         print('Filtering', key)
         tweet_data.tweet = tweet_data.tweet.apply(lambda tweet: re.sub(value, '', tweet))

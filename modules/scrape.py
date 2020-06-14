@@ -31,7 +31,12 @@ def scrape_twitter_handles(handles_path='data/handles.csv', handles_directory='d
             twint.run.Search(c)
 
 
+# Adapted from https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
 def download_file_from_google_drive(id, destination):
+    """
+    :param id: string, Google Drive file ID
+    :param destination: file path where the file will be downloaded to
+    """
 
     def get_confirm_token(response):
         for key, value in response.cookies.items():
@@ -63,15 +68,25 @@ def download_file_from_google_drive(id, destination):
 
 
 def download_txt_files_from_google_drive(id='1zZ02PQKig89mikY5Xhks0vtvzcsr3Dd1', destination='data/handles_raw_data'):
-
+    """
+    Download zip file with .txt files which each contain tweets per handle
+    :param id: string, Google Drive file ID
+    :param destination: file path where the text files will be unzipped to
+    """
+    # Download zip file to a temporary directory and unzip there,
     with tempfile.TemporaryDirectory() as tmpdir:
         download_file_from_google_drive(id, tmpdir + 'txt_files.zip')
-
+        # Unzip into destination file
         with zipfile.ZipFile(tmpdir + 'txt_files.zip', "r") as zip_ref:
             zip_ref.extractall(destination)
 
 
 def from_raw_txt_to_csv(input_directory='data/handles_raw_data', output_file='data/tweets.csv'):
+    """
+    Convert raw text files per handle into a csv with columns 'tweet_id', 'timestamp', 'handle', 'tweet'
+    :param input_directory: directory where text files are located
+    :param output_file: path to csv file where data will be written to
+    """
     # Obtain a list of all text files with raw tweet data. One file per handle
     raw_handle_files = os.listdir(input_directory)
     # List of all handles
