@@ -27,8 +27,6 @@ def read_raw_data(file='data/tweets.csv'):
     data = pd.read_csv(file, index_col=['timestamp'], parse_dates=True)
     # Drop NAs
     data.dropna(inplace=True)
-    # Sort by date
-    data.sort_values(by=['timestamp', 'tweet_id'], inplace=True)
 
     return data
 

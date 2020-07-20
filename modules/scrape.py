@@ -1,5 +1,5 @@
 import pandas as pd
-import twint
+#import twint
 import requests
 import zipfile
 import tempfile
@@ -121,9 +121,8 @@ def from_raw_txt_to_csv(input_directory='data/handles_raw_data', output_file='da
                             ' '.join(raw_tweet.split(' ')[5:]).rstrip('\n')] for raw_tweet in raw_tweets
                                                                                 if len(raw_tweet.split(' ')) > 6]
 
-    # Create dataframe and sort by tweet_id
+    # Create dataframe
     tweets_df = pd.DataFrame(df_raw_tweets_input, columns=['tweet_id', 'timestamp', 'handle', 'tweet'])
-    tweets_df.sort_values('tweet_id', inplace=True)
 
     # Remove tweets whose handle isn't in the raw_handle list
     tweets_df = tweets_df[tweets_df.handle.isin(raw_handles)].reset_index(drop=True)
@@ -131,6 +130,26 @@ def from_raw_txt_to_csv(input_directory='data/handles_raw_data', output_file='da
     tweets_df.to_csv(output_file, index=False)
 
     print("From raw text files to csv tweet database successful")
+
+
+def raw_csv_parse_dates(file='data/tweets.csv'):
+
+    tweets_df = pd.read_csv(file)
+    # Drop NAs
+    tweets_df.dropna(inplace=True)
+
+    # Convert timestamp to Eastern. Original scraped data is in Dubai time
+    tweets_df.timestamp = pd.to_datetime(tweets_df.timestamp)
+    tweets_df.timestamp = tweets_df.timestamp.dt.tz_localize('Asia/Dubai')
+    tweets_df.timestamp = tweets_df.timestamp.dt.tz_convert('US/Eastern')
+    tweets_df.timestamp = tweets_df.timestamp.dt.tz_convert(None)
+
+    # Sort by timestamp and tweet_id
+    tweets_df.sort_values(by=['timestamp', 'tweet_id'], inplace=True)
+
+    tweets_df.to_csv(file, index=False)
+
+
 
 
 
