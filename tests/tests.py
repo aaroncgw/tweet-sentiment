@@ -17,7 +17,6 @@ def test_tweet_data():
     text_file2 += '2 2020-05-08 15:37:44 +04 <handle2> @peter @paul Another tweet by handle 2\n'
 
     # The expected clean pandas df from these text files is:
-
     target_df = pd.DataFrame(columns=['timestamp', 'tweet_id', 'handle', 'tweet'])
     target_df.tweet_id = [1, 2, 3, 4]
     target_df.handle = ['handle2', 'handle2', 'handle1', 'handle1']
