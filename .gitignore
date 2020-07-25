@@ -114,6 +114,7 @@ data/handles_raw_data
 data/clean_tweeter_list.xlsx
 data/handles.csv
 data/tweets.csv
+data/ES.csv
 
 # Test files
 tester.ipynb

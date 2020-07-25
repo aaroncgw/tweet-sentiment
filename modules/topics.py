@@ -27,9 +27,6 @@ class TopicSeries:
         self.tfidf_dict[date] = tfidf
         self.nmf_dict[date] = nmf
 
-    # Static method to be able to use the tokenizer in Count and TfidfVectorizers,
-    # and allow saving to pickle
-
     def calculate_lda(self, date, data):
 
         cv = CountVectorizer(tokenizer=self.twitter_tokenizer)
@@ -42,6 +39,8 @@ class TopicSeries:
         self.cv_dict[date] = cv
         self.lda_dict[date] = lda
 
+    # Static method to be able to use the tokenizer in Count and TfidfVectorizers,
+    # and allow saving to pickle
     @staticmethod
     def twitter_tokenizer(d,
                           model=nlp,

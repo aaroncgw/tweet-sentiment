@@ -133,6 +133,14 @@ def from_raw_txt_to_csv(input_directory='data/handles_raw_data', output_file='da
 
 
 def raw_csv_parse_dates(file='data/tweets.csv'):
+    """
+    Modify csv file, output from_raw_txt_to_csv method, so timestamp is in US/Eastern Time and
+    data is sorted by timestamp and tweet_id
+
+    Parameters:
+        file: string
+            File path to csv file
+    """
 
     tweets_df = pd.read_csv(file)
     # Drop NAs
