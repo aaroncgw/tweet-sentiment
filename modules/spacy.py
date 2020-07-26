@@ -4,9 +4,18 @@ import spacy
 import re
 
 
-def spacy_twitter_model():
-
-    nlp = spacy.load('en_core_web_sm')
+# Idea from https://stackoverflow.com/questions/43388476/how-could-spacy-tokenize-hashtag-as-a-whole
+def spacy_twitter_model(model='en_core_web_sm'):
+    """
+    Load Spacy model, adding capability to detect Twitter picture links and hashtags
+    into Spacy's tokenizer
+    Parameters:
+        model: string, optional
+            Name of Spacy model to load. Defaults to en_core_web_sm
+    Returns:
+        Spacy model
+    """
+    nlp = spacy.load(model)
 
     # get default pattern for tokens that don't get split
     re_token_match = _get_regex_pattern(nlp.Defaults.token_match)
