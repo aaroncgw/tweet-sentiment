@@ -81,7 +81,7 @@ class TopicSeries:
             else:
                 t = t.text
             if lowercase:
-                t = t.lower()
+                t.lower()
             tokens.append(t)
         return tokens
 
