@@ -2,13 +2,16 @@ import pandas as pd
 from collections import Counter
 import re
 
+pd.options.mode.chained_assignment = None  # default='warn'
+
 # https://github.com/explosion/spaCy/issues/2156 for hashtag with Spacy
 
-REGEX_DICT = {'links': "http\S+",
-              'pic_links': "pic.twitter.com\S+",
-              'hashtags': "\B#\w*[a-zA-Z]+\w*",
-              'emails': "[a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+",
-              'adds': "\s([@][\w_-]+)"}
+
+REGEX_DICT = {'link': "http\S+",
+              'piclink': "pic.twitter.com\S+",
+              'hashtag': "\B#\w*[a-zA-Z]+\w*|#\w*[a-zA-Z]+\w*",
+              'email': "[a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+",
+              'add': "\s([@][\w_-]+)|[@][\w_-]+"}
 
 
 def read_raw_data(file='data/tweets.csv'):
@@ -49,6 +52,17 @@ def remove_timestamp_tweet_id_mismatch(input_file='data/tweets.csv', output_file
     tweets_df = tweets_df[tweets_df.index == tweets_df.index.sort_values()]
 
     tweets_df.to_csv(output_file, index=False)
+
+
+def clean_sentiment(tweets):
+
+    for key, value in REGEX_DICT.items():
+        print('Filtering', key)
+        tweets = tweets.apply(lambda tweet: re.sub(value, '', tweet))
+
+    tweets = tweets.str.lower()
+
+    return tweets
 
 
 def get_clean_data(file='data/tweets.csv'):
