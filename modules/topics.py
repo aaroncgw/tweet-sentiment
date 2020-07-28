@@ -1,10 +1,10 @@
-from .spacy import spacy_twitter_model
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
+from spacy.lang.en.stop_words import STOP_WORDS
+import string
 
-# Spacy model as input for twitter tokenizer. Loading it here to allow for both direct tokenization
-# in CountVectorizer and TfidfVectorizer, and saving Topicseries class to pickle
-nlp = spacy_twitter_model()
+# Using Spacy's list of stopwords plus all letters
+STOP_WORDS = list(STOP_WORDS + set(string.ascii_lowercase))
 
 
 class TopicSeries:
@@ -36,8 +36,9 @@ class TopicSeries:
             data: Pandas DataFrame
                 Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
         """
-        # TF-IDF model, using twitter_tokenizer as tokenizer
-        tfidf = TfidfVectorizer(tokenizer=self.twitter_tokenizer)
+        # TF-IDF model, token_pattern is alpha only words + hashtags
+        tfidf = TfidfVectorizer(stop_words=STOP_WORDS ,
+                                token_pattern='^[A-Za-z]+|#\w*[a-zA-Z]+\w*')
         tfidf_vecs = tfidf.fit_transform(data)
         # Fit NMF model with n_components topics with TF-IDF input
         nmf = NMF(n_components=self.n_components,
@@ -57,8 +58,9 @@ class TopicSeries:
             data: Pandas DataFrame
                 Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
         """
-        # CountVectorizer model, using twitter_tokenizer as tokenizer
-        cv = CountVectorizer(tokenizer=self.twitter_tokenizer)
+        # TF-IDF model, token_pattern is alpha only words + hashtags
+        cv = CountVectorizer(stop_words=STOP_WORDS ,
+                             token_pattern='^[A-Za-z]+|#\w*[a-zA-Z]+\w*')
         count_vecs = cv.fit_transform(data)
         # Fit LDA model with n_components topics with cv input
         lda = LatentDirichletAllocation(n_components=self.n_components,
@@ -67,67 +69,6 @@ class TopicSeries:
         # Add CountVectorizer and LDA models to their respective dictionaries, with date as key
         self.cv_dict[date] = cv
         self.lda_dict[date] = lda
-
-    # Static method to be able to use the tokenizer in Count and TFIDF vectorizers,
-    # and allow saving to pickle
-    @staticmethod
-    def twitter_tokenizer(data,
-                          model=nlp,
-                          urls=True,
-                          stop_words=True,
-                          lowercase=True,
-                          alpha_only=True,
-                          hashtags=False,
-                          lemma=False):
-        """
-        Full tokenizer with flags for processing steps
-
-        Parameters:
-            data: string
-                String to be tokenized
-            model: Spacy model
-                Ideally, an output from the method spacy_twitter_model() from modules.spacy
-            urls: bool
-                If True, remove URLs and Twitter picture links
-            stop_words: bool
-                If True, removes stop words
-            lowercase: bool
-                If True, turns all tokens to lowercase
-            alpha_only: bool
-                If True, removes all non-alpha characters
-            hashtags: bool
-                If True, removes hashtags
-            lemma: bool
-                If True, lemmatizes words
-        """
-        parsed = model(data)
-        # token collector
-        tokens = []
-        for t in parsed:
-            # remove URLs abd Twitter picture links
-            if t.like_url or t._.is_piclink & urls:
-                continue
-            # remove stopwords
-            if t.is_stop & stop_words:
-                continue
-            # alpha characters only
-            if not t.is_alpha & alpha_only:
-                # if not alpha only, remove hashtags
-                if hashtags:
-                    continue
-                else:
-                    if not t._.is_hashtag:
-                        continue
-            # lemmatize
-            if lemma:
-                t = t.lemma_
-            else:
-                t = t.text
-            # turn to lowercase
-            if lowercase:
-                t = t.lower()
-            tokens.append(t)
-        return tokens
 
 
 def display_components(model, word_features, top_display=5):
