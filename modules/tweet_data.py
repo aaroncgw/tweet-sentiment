@@ -55,6 +55,15 @@ def remove_timestamp_tweet_id_mismatch(input_file='data/tweets.csv', output_file
 
 
 def clean_sentiment(tweets):
+    """
+    Remove links, hashtags, emails and @s from tweets, and covert to lowercase
+
+    Parameters:
+        tweets: pandas Series[str]
+            Series of tweets
+    Output:
+        pandas Series[str]
+    """
 
     for key, value in REGEX_DICT.items():
         print('Filtering', key)
