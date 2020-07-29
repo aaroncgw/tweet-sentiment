@@ -1,7 +1,13 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from spacy.lang.en.stop_words import STOP_WORDS
+import pickle
+import datetime as dt
 import string
+
+from warnings import simplefilter
+from sklearn.exceptions import ConvergenceWarning
+simplefilter("ignore", category=ConvergenceWarning)
 
 # Using Spacy's list of stopwords plus all letters
 STOP_WORDS = list(STOP_WORDS.union(set(string.ascii_lowercase)))
@@ -69,6 +75,20 @@ class TopicSeries:
         # Add CountVectorizer and LDA models to their respective dictionaries, with date as key
         self.cv_dict[date] = cv
         self.lda_dict[date] = lda
+
+    def fit(self, df, date_range):
+
+        for i in range(len(date_range) - 1):
+
+            str_date = str(date_range[i + 1].date())
+            print("Working on : ", str_date, end="\r")
+            sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
+            self.calculate_nmf(str_date, sub_df)
+            self.calculate_lda(str_date, sub_df)
+
+    def save(self, file_path='data/topics.p'):
+
+        pickle.dump(self, open(file_path, "wb"))
 
 
 def display_components(model, word_features, top_display=5):
