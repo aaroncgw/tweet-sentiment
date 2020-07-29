@@ -4,7 +4,7 @@ from spacy.lang.en.stop_words import STOP_WORDS
 import string
 
 # Using Spacy's list of stopwords plus all letters
-STOP_WORDS = list(STOP_WORDS + set(string.ascii_lowercase))
+STOP_WORDS = list(STOP_WORDS.union(set(string.ascii_lowercase)))
 
 
 class TopicSeries:
