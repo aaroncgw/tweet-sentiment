@@ -1,16 +1,16 @@
+from.spacy import spacy_twitter_model
+
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
-from spacy.lang.en.stop_words import STOP_WORDS
+
 import pickle
 import datetime as dt
-import string
 
 from warnings import simplefilter
 from sklearn.exceptions import ConvergenceWarning
 simplefilter("ignore", category=ConvergenceWarning)
 
-# Using Spacy's list of stopwords plus all letters
-STOP_WORDS = list(STOP_WORDS.union(set(string.ascii_lowercase)))
+nlp = spacy_twitter_model()
 
 
 class TopicSeries:
@@ -43,12 +43,10 @@ class TopicSeries:
                 Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
         """
         # TF-IDF model, token_pattern is alpha only words + hashtags
-        tfidf = TfidfVectorizer(stop_words=STOP_WORDS ,
-                                token_pattern='^[A-Za-z]+|#\w*[a-zA-Z]+\w*')
+        tfidf = TfidfVectorizer(tokenizer=self.tokenizer, lowercase=False)
         tfidf_vecs = tfidf.fit_transform(data)
         # Fit NMF model with n_components topics with TF-IDF input
-        nmf = NMF(n_components=self.n_components,
-                  random_state=self.random_state)
+        nmf = NMF(n_components=self.n_components, random_state=self.random_state)
         nmf.fit_transform(tfidf_vecs)
         # Add TFIDF and NMF models to their respective dictionaries, with date as key
         self.tfidf_dict[date] = tfidf
@@ -65,12 +63,10 @@ class TopicSeries:
                 Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
         """
         # TF-IDF model, token_pattern is alpha only words + hashtags
-        cv = CountVectorizer(stop_words=STOP_WORDS ,
-                             token_pattern='^[A-Za-z]+|#\w*[a-zA-Z]+\w*')
+        cv = CountVectorizer(tokenizer=self.tokenizer, lowercase=False)
         count_vecs = cv.fit_transform(data)
         # Fit LDA model with n_components topics with cv input
-        lda = LatentDirichletAllocation(n_components=self.n_components,
-                                        random_state=self.random_state)
+        lda = LatentDirichletAllocation(n_components=self.n_components, random_state=self.random_state)
         lda.fit_transform(count_vecs)
         # Add CountVectorizer and LDA models to their respective dictionaries, with date as key
         self.cv_dict[date] = cv
@@ -83,12 +79,58 @@ class TopicSeries:
             str_date = str(date_range[i + 1].date())
             print("Working on : ", str_date, end="\r")
             sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
+            sub_df = [self.twitter_tokenizer(text) for text in nlp.pipe(sub_df, disable=["tagger", "parser", "ner"])]
             self.calculate_nmf(str_date, sub_df)
             self.calculate_lda(str_date, sub_df)
 
     def save(self, file_path='data/topics.p'):
 
         pickle.dump(self, open(file_path, "wb"))
+
+    @staticmethod
+    def tokenizer(d):
+        return d
+
+    @staticmethod
+    def twitter_tokenizer(parsed,
+                          urls=True,
+                          stop_words=True,
+                          lowercase=True,
+                          alpha_only=True,
+                          hashtags=False,
+                          lemma=False):
+        """Full tokenizer with flags for processing steps
+        urls: If True, remove URLs
+        stop_words: If True, removes stop words
+        lowercase: If True, lowercases all tokens
+        alpha_only: If True, removes all non-alpha characters
+        lemma: If True, lemmatizes words
+        The tokenizer also removes all URLS
+        """
+        # token collector
+        tokens = []
+        for t in parsed:
+            # remove URLs
+            if t.like_url or t._.is_piclink & urls:
+                continue
+            # only include stop words if stop words==True
+            if t.is_stop & stop_words:
+                continue
+            # only include non-alpha is alpha_only==False
+            if not t.is_alpha & alpha_only:
+                if hashtags:
+                    continue
+                else:
+                    if not t._.is_hashtag:
+                        continue
+            if lemma:
+                t = t.lemma_
+            else:
+                t = t.text
+            if lowercase:
+                t = t.lower()
+            tokens.append(t)
+        return tokens
 
 
 def display_components(model, word_features, top_display=5):

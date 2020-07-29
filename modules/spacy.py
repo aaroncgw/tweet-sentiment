@@ -17,6 +17,8 @@ def spacy_twitter_model(model='en_core_web_sm'):
     """
     nlp = spacy.load(model)
 
+    nlp.Defaults.stop_words |= {'yeah', 'yep', 'ah', 'nah', 'lol', 'oh', 'yes', 'ha', 'haha', 'hahaha', 'maybe',
+                                'like', 'cc', 'let', 'thank', 'thanks', 'sorry', 'fwiw', 'wow', 'icymi'}
     # get default pattern for tokens that don't get split
     re_token_match = _get_regex_pattern(nlp.Defaults.token_match)
     # add your patterns (here: hashtags and in-word hyphens)
