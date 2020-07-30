@@ -4,8 +4,6 @@ import re
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
-# https://github.com/explosion/spaCy/issues/2156 for hashtag with Spacy
-
 
 REGEX_DICT = {'link': "http\S+",
               'piclink': "pic.twitter.com\S+",
@@ -21,7 +19,7 @@ def read_raw_data(file='data/tweets.csv'):
     Parameters:
         file: str, optional
             CSV file path
-    Output:
+    Returns:
         pandas DataFrame
     """
 
@@ -61,7 +59,7 @@ def clean_sentiment(tweets):
     Parameters:
         tweets: pandas Series[str]
             Series of tweets
-    Output:
+    Returns:
         pandas Series[str]
     """
 
@@ -77,8 +75,12 @@ def clean_sentiment(tweets):
 def get_clean_data(file='data/tweets.csv'):
     """
     Reads csv file with raw tweet data and returns a DataFrame with tweets parsed and cleaned
-    :param file: csv file path
-    :return: pandas DataFrame
+
+    Parameters:
+        file: str, optional
+            CSV file path
+    Returns:
+        pandas DataFrame
     """
 
     def clean(tweet):

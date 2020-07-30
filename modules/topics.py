@@ -92,32 +92,46 @@ class TopicSeries:
         return d
 
     @staticmethod
-    def twitter_tokenizer(parsed,
+    def twitter_tokenizer(doc,
                           urls=True,
                           stop_words=True,
                           lowercase=True,
                           alpha_only=True,
                           hashtags=False,
                           lemma=False):
-        """Full tokenizer with flags for processing steps
-        urls: If True, remove URLs
-        stop_words: If True, removes stop words
-        lowercase: If True, lowercases all tokens
-        alpha_only: If True, removes all non-alpha characters
-        lemma: If True, lemmatizes words
-        The tokenizer also removes all URLS
+        """
+        Full tokenizer with flags for processing steps
+
+        Parameters:
+            urls: bool, optional
+                If True, remove URLs
+            stop_words: bool, optional
+                If True, removes stop words
+            lowercase: bool, optional
+                If True, lowercases all tokens
+            alpha_only: bool, optional
+                If True, removes all non-alpha characters
+            hashtags: bool, optional
+                If True, remove hashtags
+            lemma: bool, optional
+            If True, lemmatizes words
+
+        Returns:
+            List[str]
+                List of tokens
         """
         # token collector
         tokens = []
-        for t in parsed:
+        for t in doc:
             # remove URLs
             if t.like_url or t._.is_piclink & urls:
                 continue
             # only include stop words if stop words==True
             if t.is_stop & stop_words:
                 continue
-            # only include non-alpha is alpha_only==False
+            # if alpha_only=True, only include alpha characters unless they are hashtags
             if not t.is_alpha & alpha_only:
+                # only include hashtags if hashtags=True
                 if hashtags:
                     continue
                 else:

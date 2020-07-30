@@ -9,6 +9,7 @@ def spacy_twitter_model(model='en_core_web_sm'):
     """
     Load Spacy model, adding capability to detect Twitter picture links and hashtags
     into Spacy's tokenizer
+
     Parameters:
         model: string, optional
             Name of Spacy model to load. Defaults to en_core_web_sm

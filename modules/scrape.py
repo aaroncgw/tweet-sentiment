@@ -138,7 +138,7 @@ def raw_csv_parse_dates(file='data/tweets.csv'):
     data is sorted by timestamp and tweet_id
 
     Parameters:
-        file: string
+        file: string, optional
             File path to csv file
     """
 
