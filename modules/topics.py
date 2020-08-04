@@ -2,6 +2,7 @@ from.spacy import spacy_twitter_model
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.decomposition._nmf import _beta_divergence
 
 import pickle
 import datetime as dt
@@ -78,10 +79,40 @@ class TopicSeries:
 
             str_date = str(date_range[i + 1].date())
             print("Working on : ", str_date, end="\r")
+
             sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
             sub_df = [self.twitter_tokenizer(text) for text in nlp.pipe(sub_df, disable=["tagger", "parser", "ner"])]
             self.calculate_nmf(str_date, sub_df)
             self.calculate_lda(str_date, sub_df)
+
+        print("\nFinished")
+
+    def calc_rec_error(self, df, date_range):
+
+        model_err = []
+        new_err = []
+
+        for i in range(len(date_range) - 1):
+            str_date = str(date_range[i + 1].date())
+            prev_str_date = str(date_range[i].date())
+            print("Working on : ", str_date, end="\r")
+
+            sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
+            sub_df = [self.twitter_tokenizer(text) for text in nlp.pipe(sub_df, disable=["tagger", "parser", "ner"])]
+            tfidf_vecs = self.tfidf_dict[prev_str_date].transform(sub_df)
+            new_rec_err = _beta_divergence(tfidf_vecs,
+                                           self.nmf_dict[prev_str_date].transform(tfidf_vecs),
+                                           self.nmf_dict[prev_str_date].components_,
+                                           'frobenius',
+                                           square_root=True)
+            rec_err = self.nmf_dict[str_date].reconstruction_err_
+
+            model_err.append(rec_err)
+            new_err.append(new_rec_err)
+
+        print("\nFinished")
+
+        return model_err, new_err
 
     def save(self, file_path='data/topics.p'):
 

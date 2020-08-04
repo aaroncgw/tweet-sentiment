@@ -126,3 +126,6 @@ sentiment_2020-02-01_2020-02-10.p
 listfile.txt
 *.p
 pearkes.txt
+modules/extracode.py
+data/nmf_features.csv
+data/sentiment_features.csv
