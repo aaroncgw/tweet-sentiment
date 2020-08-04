@@ -129,3 +129,4 @@ pearkes.txt
 modules/extracode.py
 data/nmf_features.csv
 data/sentiment_features.csv
+/data/tweets_reduced.csv
