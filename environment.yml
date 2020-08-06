@@ -1,6 +1,7 @@
 name: tweet-sentiment
 channels:
   - anaconda
+  - conda-forge
   - pytorch
 dependencies:
   - python=3.7
@@ -11,5 +12,6 @@ dependencies:
   - torchvision
   - scikit-learn
   - matplotlib
+  - wordcloud
   - pip:
     - transformers

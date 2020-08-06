@@ -74,20 +74,45 @@ class TopicSeries:
         self.lda_dict[date] = lda
 
     def fit(self, df, date_range):
+        """
+        Fit NMF and LDA models for a range of dates
+
+        Parameters:
+            df: Pandas DataFrame
+                Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
+            date_range: DateTimeIndex
+                DateTimeIndex of dates which will serve as range for fitting the data
+        """
 
         for i in range(len(date_range) - 1):
 
             str_date = str(date_range[i + 1].date())
             print("Working on : ", str_date, end="\r")
-
+            # Take portion of df in the range of a trading day
             sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
+            # Tokenize with Spacy NLP pipe. Disable tagger, parser and ner for faster calculation
             sub_df = [self.twitter_tokenizer(text) for text in nlp.pipe(sub_df, disable=["tagger", "parser", "ner"])]
+            # Calculate NMF model
             self.calculate_nmf(str_date, sub_df)
+            # Calculate LDA model
             self.calculate_lda(str_date, sub_df)
 
         print("\nFinished")
 
     def calc_rec_error(self, df, date_range):
+        """
+        Calculate reconstruction error. For the data of one trading day, take previous day's NMF
+        model, apply transform method to the data, and calculate reconstruction error
+        Parameters:
+            df: Pandas DataFrame
+                Data for a particular date range for the output of read_raw_data() method in modules.tweet_data
+            date_range: DateTimeIndex
+                DateTimeIndex of dates which will serve as range for fitting the data
+
+        Returns: list, list
+                List of reconstruction errors for the fitted models
+                List of reconstruction errors for the transformed data
+        """
 
         model_err = []
         new_err = []
@@ -97,14 +122,20 @@ class TopicSeries:
             prev_str_date = str(date_range[i].date())
             print("Working on : ", str_date, end="\r")
 
+            # Take portion of df in the range of a trading day
             sub_df = df[date_range[i]:(date_range[i + 1] - dt.timedelta(seconds=1))].tweet
+            # Tokenize with Spacy NLP pipe. Disable tagger, parser and ner for faster calculation
             sub_df = [self.twitter_tokenizer(text) for text in nlp.pipe(sub_df, disable=["tagger", "parser", "ner"])]
+            # Use previous day's tfidf model to transform data to tfidf format used to fit NMF model
             tfidf_vecs = self.tfidf_dict[prev_str_date].transform(sub_df)
+            # Calculate reconstruction error using method from
+            # https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/decomposition/_nmf.py
             new_rec_err = _beta_divergence(tfidf_vecs,
                                            self.nmf_dict[prev_str_date].transform(tfidf_vecs),
                                            self.nmf_dict[prev_str_date].components_,
                                            'frobenius',
                                            square_root=True)
+            # Reconstruction error from original model
             rec_err = self.nmf_dict[str_date].reconstruction_err_
 
             model_err.append(rec_err)
