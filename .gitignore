@@ -115,18 +115,7 @@ data/clean_tweeter_list.xlsx
 data/handles.csv
 data/tweets.csv
 data/ES.csv
-
-# Test files
-tester.ipynb
-
-save.p
-/data/NMF-2017-03-16-2020-05-29.p
-/data/NMF-2018-10-19-2020-05-29.p
-sentiment_2020-02-01_2020-02-10.p
-listfile.txt
 *.p
-pearkes.txt
-modules/extracode.py
-data/nmf_features.csv
-data/sentiment_features.csv
-/data/tweets_reduced.csv
+
+
+data/tweets_reduced.csv
